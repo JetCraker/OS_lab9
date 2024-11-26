@@ -4,8 +4,6 @@ import datetime
 import json
 import win32pipe
 import win32file
-import pywintypes
-from collections import defaultdict
 import threading
 
 import win32security
@@ -23,19 +21,39 @@ class FileMonitorServer:
         # Дозволи для локальної мережі
         security_attributes = win32security.SECURITY_ATTRIBUTES()
         security_descriptor = win32security.SECURITY_DESCRIPTOR()
-        security_descriptor.Initialize(security_attributes)
+        security_descriptor.Initialize()
         security_descriptor.SetSecurityDescriptorDacl(1, None, 0)
-        security_attributes.SecurityDescriptor = security_descriptor
+        security_attributes.SECURITY_DESCRIPTOR = security_descriptor
 
-        return win32pipe.CreatePipe(
+        return win32pipe.CreateNamedPipe(
             PIPE_NAME,
             win32pipe.PIPE_ACCESS_DUPLEX,
             win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_READMODE_MESSAGE | win32pipe.PIPE_WAIT,
             win32pipe.PIPE_UNLIMITED_INSTANCES,
             65536, 65536,
             0,
-            security_attributes
+            security_attributes,
         )
+
+    def monitor_directory(self, directory, extension):
+        result_files = list()  # Список для збереження результатів
+        total_size = 0
+        try:
+            for root, _, files in os.walk(directory):  # Локальна змінна `files` з імен файлів
+                for file in files:
+                    if file.endswith(extension):
+                        file_path = os.path.join(root, file)
+                        size = os.path.getsize(file_path)
+                        creation_time = os.path.getmtime(file_path)
+                        result_files.append({  # Додаємо до `result_files`
+                            "name": file,
+                            "size": size,
+                            "creation_time": datetime.datetime.fromtimestamp(creation_time).strftime("%Y-%m-%d %H:%M")
+                        })
+                        total_size += size
+            return {"total_size": total_size, "files": result_files}
+        except Exception as e:
+            return {"error": str(e)}
 
     def process_request(self, request):
         directory = request.get("directory")
@@ -43,10 +61,10 @@ class FileMonitorServer:
 
         if not directory or not extension:
             return {"error": "Invalid request: 'directory' and 'extension' are required"}
-        
+
         cache_key = f'{directory}:{extension}'
         current_time = time.time()
-        
+
         with self.lock:
             if cache_key in self.cache and (current_time - self.cache_life_stamp[cache_key] < CACHE_LIFE_TIME):
                 return self.cache[cache_key]
@@ -54,6 +72,7 @@ class FileMonitorServer:
             result = self.monitor_directory(directory, extension)
             self.cache[cache_key] = result
             self.cache_life_stamp[cache_key] = current_time
+        return result
 
     # Обробка запита клієнта
     def handle_client(self, pipe):
@@ -73,16 +92,7 @@ class FileMonitorServer:
     def run(self):
         print(f'Server started on PIPE {PIPE_NAME}')
         while True:
-            pipe = win32pipe.ConnectNamedPipe(
-                PIPE_NAME,
-                win32pipe.PIPE_ACCESS_DUPLEX,
-                win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_READMODE_MESSAGE | win32pipe.PIPE_WAIT,
-                win32pipe.PIPE_UNLIMITED_INSTANCES,
-                65536, 65536,
-                0,
-                None
-            )
-
+            pipe = self.create_pipe()
             print('Waiting for connection...')
             win32pipe.ConnectNamedPipe(pipe, None)
             print('Connected.')
