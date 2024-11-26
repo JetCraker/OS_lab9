@@ -1,4 +1,4 @@
 PIPE_NAME = r'\\.\pipe\FileMonitorPipe'
-CASH_LIFE_TIME = 5
+CACHE_LIFE_TIME = 5
 
 
