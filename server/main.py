@@ -51,13 +51,20 @@ class FileMonitorServer:
                             "creation_time": datetime.datetime.fromtimestamp(creation_time).strftime("%Y-%m-%d %H:%M")
                         })
                         total_size += size
-            return {"total_size": total_size, "files": result_files}
+            print(json.dumps({"total_size": total_size, "files": result_files}, indent=4))
+            return json.dumps({"total_size": total_size, "files": result_files}, indent=4)
         except Exception as e:
             return {"error": str(e)}
 
     def process_request(self, request):
+        print(request)
         directory = request.get("directory")
         extension = request.get("extension")
+        if extension:
+            extension = extension.replace("\\", "\\\\")
+            extension = extension.replace("/", "\\\\")
+        print("directory:", directory)
+        print("extension", extension)
 
         if not directory or not extension:
             return {"error": "Invalid request: 'directory' and 'extension' are required"}
@@ -82,6 +89,7 @@ class FileMonitorServer:
                 request = json.loads(data.decode('utf-8'))
 
                 response = self.process_request(request)
+                print(response)
 
                 win32file.WriteFile(pipe, json.dumps(response).encode('utf-8'))
         except Exception as e:
