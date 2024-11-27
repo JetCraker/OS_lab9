@@ -51,8 +51,8 @@ class FileMonitorServer:
                             "creation_time": datetime.datetime.fromtimestamp(creation_time).strftime("%Y-%m-%d %H:%M")
                         })
                         total_size += size
-            print(json.dumps({"total_size": total_size, "files": result_files}, indent=4))
-            return json.dumps({"total_size": total_size, "files": result_files}, indent=4)
+            print({"total_size": total_size, "files": result_files})
+            return {"total_size": total_size, "files": result_files}
         except Exception as e:
             return {"error": str(e)}
 
@@ -89,7 +89,6 @@ class FileMonitorServer:
                 request = json.loads(data.decode('utf-8'))
 
                 response = self.process_request(request)
-                print(response)
 
                 win32file.WriteFile(pipe, json.dumps(response).encode('utf-8'))
         except Exception as e:
