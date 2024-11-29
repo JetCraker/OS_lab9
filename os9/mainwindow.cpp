@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
+
 }
 
 MainWindow::~MainWindow()

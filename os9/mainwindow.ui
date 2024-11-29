@@ -97,7 +97,7 @@
 
 QHeaderView::section {
     background-color: rgb(77, 129, 213); /* Фон заголовків таблиці */
-    color: white;              /* Білий текст заголовків */
+    color: black;              /* Білий текст заголовків */
     border: 2px solid #ddd;    /* Рамка для заголовків */
     padding: 5px;              /* Відступи у заголовках */
 }</string>
@@ -312,19 +312,6 @@ QPushButton:hover {
      <height>26</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
-    <property name="title">
-     <string>Допомога</string>
-    </property>
-    <addaction name="action"/>
-   </widget>
-   <widget class="QMenu" name="menu_2">
-    <property name="title">
-     <string>Налаштування</string>
-    </property>
-   </widget>
-   <addaction name="menu"/>
-   <addaction name="menu_2"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action">
